@@ -3,44 +3,65 @@
 
 #include <iostream>
 
+const int WINDOW_SIZE_X = 640;
+const int WINDOW_SIZE_Y = 480;
+const char* WINDOW_TITLE = "Tank Game";
+
+void glfwWindowSizeCallBack(GLFWwindow* pWindow, int width, int height) 
+{
+    glViewport(0, 0, width, height);
+}
+
+void glfwKeyCallBack(GLFWwindow* pWindow, int key, int scancode, int action, int mode) 
+{
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) 
+    {
+        glfwSetWindowShouldClose(pWindow, GL_TRUE);
+    }
+}
+
 int main(void)
 {
-    GLFWwindow* window;
-
-    /* Initialize the library */
     if (!glfwInit())
-        return -1;
-
-    /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
-    if (!window)
     {
+        std::cout << "Can't load GLFW" << std::endl;
+        return -1;
+    }
+
+    GLFWwindow* pWindow = glfwCreateWindow(WINDOW_SIZE_X, WINDOW_SIZE_Y, WINDOW_TITLE, nullptr, nullptr);
+    if (!pWindow)
+    {
+        std::cout << "Window not created" << std::endl;
         glfwTerminate();
         return -1;
     }
 
-    /* Make the window's context current */
-    glfwMakeContextCurrent(window);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    glfwMakeContextCurrent(pWindow);
 	
 	if(!gladLoadGL()){
 		std::cout << "Can't load GLAD!" << std::endl;
 		return -1;
 	}
+
+    glfwSetWindowSizeCallback(pWindow, glfwWindowSizeCallBack);
+    glfwSetKeyCallback(pWindow, glfwKeyCallBack);
 	
-	std::cout << "OpenGL " << GLVersion.major << "." << GLVersion.minor << std::endl;
-	
+	std::cout << "Renderer: " << glGetString(GL_RENDERER) << std::endl;
+	std::cout << "OpenGL version: " << glGetString(GL_VERSION) << std::endl;
+
 	glClearColor(1, 1, 0, 1);
 
-    /* Loop until the user closes the window */
-    while (!glfwWindowShouldClose(window))
+    while (!glfwWindowShouldClose(pWindow))
     {
-        /* Render here */
+   
         glClear(GL_COLOR_BUFFER_BIT);
+  
+        glfwSwapBuffers(pWindow);
 
-        /* Swap front and back buffers */
-        glfwSwapBuffers(window);
-
-        /* Poll for and process events */
         glfwPollEvents();
     }
 
