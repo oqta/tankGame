@@ -1,6 +1,6 @@
 #include "ResourceManager.h"
 #include "../Renderer/ShaderProgram.h"
-
+#include "../Renderer/Texture2D.h"
 #include <sstream>
 #include <fstream>
 #include <iostream>
@@ -70,19 +70,37 @@ std::shared_ptr<Renderer::ShaderProgram> ResourceManager::getShaderProgram(const
 	return nullptr;
 }
 
-void ResourceManager::loadTexture(const std::string& textureName, const std::string& texturePatch)
+std::shared_ptr<Renderer::Texture2D> ResourceManager::loadTexture(const std::string& textureName, const std::string& texturePatch)
 {
-	int channel = 0;
+	int channels = 0;
 	int width = 0;
 	int height = 0;
 	stbi_set_flip_vertically_on_load(true);
-	unsigned char* pixels = stbi_load(std::string(mPath + "/" + texturePatch).c_str(), &width, &height, &channel, 0);
+	unsigned char* pixels = stbi_load(std::string(mPath + "/" + texturePatch).c_str(), &width, &height, &channels, 0);
 
 	if (!pixels)
 	{
 		std::cerr << "Can't mload image" << texturePatch << std::endl;
-		return;
+		return nullptr;
 	}
 
+	std::shared_ptr<Renderer::Texture2D> newTexture = mTextures.emplace(textureName, std::make_shared<Renderer::Texture2D>(width, 
+		                                                                                                                   height,
+		                                                                                                                   pixels,
+		                                                                                                                   channels,
+		                                                                                                                   GL_NEAREST, 
+		                                                                                                                   GL_CLAMP_TO_EDGE)).first->second;
 	stbi_image_free(pixels);
+	return newTexture;
+}
+
+std::shared_ptr<Renderer::Texture2D> ResourceManager::getTexture(const std::string& textureName)
+{
+	TexturesMap::const_iterator it = mTextures.find(textureName);
+	if (it != mTextures.end())
+	{
+		return it->second;
+	}
+	std::cerr << "Can't find the texture: " << textureName << std::endl;
+	return nullptr;
 }
