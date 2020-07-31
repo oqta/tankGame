@@ -1,17 +1,20 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/vec2.hpp>
+#include <glm/mat4x4.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include <iostream>
 
 #include "Renderer/ShaderProgram.h"
 #include "Resources/ResourceManager.h"
 #include "Renderer/Texture2D.h"
+#include "Renderer/Sprite.h"
 
 GLfloat points[] = {
-	0.0f, 0.5f, 0.0f,
-	0.5f, -0.5f, 0.0f,
-	-0.5f, -0.5f, 0.0f
+	0.0f, 50.f, 0.0f,
+	50.f, -50.f, 0.0f,
+	-50.f, -50.f, 0.0f
 };
 
 GLfloat colors[] = {
@@ -87,7 +90,17 @@ int main(int argc, char** argv)
 			return -1;
 		}
 
+		auto pSpriteShaderProgram = resourceManager.loadShaders("SpriteShader", "res/shaders/vSprite.txt", "res/shaders/fSprite.txt");
+		if (!pSpriteShaderProgram)
+		{
+			std::cerr << "Can't create shader program: " << "SpriteShader" << std::endl;
+			return -1;
+		}
+
 		auto tex = resourceManager.loadTexture("DefaultTexture", "res/textures/map16x16.png");
+
+		auto pSprite = resourceManager.loadSprite("NewSprite", "DefaultTexture", "SpriteShader", 50, 100);
+		pSprite->setPosition(glm::vec2(300, 100));
 
 		GLuint pointsVbo = 0;
 		glGenBuffers(1, &pointsVbo);
@@ -123,6 +136,19 @@ int main(int argc, char** argv)
 		pDefaultShaderProgram->use();
 		pDefaultShaderProgram->setInt("tex", 0);
 
+		glm::mat4 modelMatrix1 = glm::mat4(1.f);
+		modelMatrix1 = glm::translate(modelMatrix1, glm::vec3(100.f, 50.f, 0.f));
+
+		glm::mat4 modelMatrix2 = glm::mat4(1.f);
+		modelMatrix2 = glm::translate(modelMatrix2, glm::vec3(590.f, 50.f, 0.f));
+
+		glm::mat4 projectionMatrix = glm::ortho(0.f, static_cast<float>(windowSize.x), 0.f, static_cast<float>(windowSize.y), -100.f, 100.f);
+
+		pDefaultShaderProgram->setMatrix4("projectionMat", projectionMatrix);
+
+		pSpriteShaderProgram->use();
+		pSpriteShaderProgram->setInt("tex", 0);
+		pSpriteShaderProgram->setMatrix4("projectionMat", projectionMatrix);
 
 		while (!glfwWindowShouldClose(pWindow))
 		{
@@ -132,8 +158,14 @@ int main(int argc, char** argv)
 			pDefaultShaderProgram->use();
 			glBindVertexArray(vao);
 			tex->bind();
+
+			pDefaultShaderProgram->setMatrix4("modelMat", modelMatrix1);
 			glDrawArrays(GL_TRIANGLES, 0, 3);
 
+			pDefaultShaderProgram->setMatrix4("modelMat", modelMatrix2);
+			glDrawArrays(GL_TRIANGLES, 0, 3);
+
+			pSprite->render();
 			glfwSwapBuffers(pWindow);
 
 			glfwPollEvents();
