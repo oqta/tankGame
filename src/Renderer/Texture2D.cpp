@@ -23,6 +23,7 @@ namespace Renderer {
 		}
 
 		glGenTextures(1, &mID);
+		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, mID);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, mWidth, mWidth, 0, mMode, GL_UNSIGNED_BYTE, data);
 

@@ -1,9 +1,12 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <glm/vec2.hpp>
+
 #include <iostream>
 
 #include "Renderer/ShaderProgram.h"
 #include "Resources/ResourceManager.h"
+#include "Renderer/Texture2D.h"
 
 GLfloat points[] = {
 	0.0f, 0.5f, 0.0f,
@@ -17,12 +20,19 @@ GLfloat colors[] = {
    0.0f, 0.0f, 1.0f
 };
 
-const int WINDOW_SIZE_X = 640;
-const int WINDOW_SIZE_Y = 480;
+GLfloat texCoord[] = {
+	0.5f, 1.0f,
+	1.0f, 0.0f,
+	0.0f, 0.0f
+};
+
+glm::ivec2 windowSize(640, 480);
 const char* WINDOW_TITLE = "Tank Game";
 
 void glfwWindowSizeCallBack(GLFWwindow* pWindow, int width, int height)
 {
+	windowSize.x = width;
+	windowSize.y = height;
 	glViewport(0, 0, width, height);
 }
 
@@ -42,7 +52,7 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
-	GLFWwindow* pWindow = glfwCreateWindow(WINDOW_SIZE_X, WINDOW_SIZE_Y, WINDOW_TITLE, nullptr, nullptr);
+	GLFWwindow* pWindow = glfwCreateWindow(windowSize.x, windowSize.y, WINDOW_TITLE, nullptr, nullptr);
 	if (!pWindow)
 	{
 		std::cout << "Window not created" << std::endl;
@@ -77,7 +87,7 @@ int main(int argc, char** argv)
 			return -1;
 		}
 
-		resourceManager.loadTexture("DefaultTexture", "res/textures/map16x16.png");
+		auto tex = resourceManager.loadTexture("DefaultTexture", "res/textures/map16x16.png");
 
 		GLuint pointsVbo = 0;
 		glGenBuffers(1, &pointsVbo);
@@ -88,6 +98,11 @@ int main(int argc, char** argv)
 		glGenBuffers(1, &colorsVbo);
 		glBindBuffer(GL_ARRAY_BUFFER, colorsVbo);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(colors), colors, GL_STATIC_DRAW);
+
+	    GLuint texCoordVbo = 0;
+		glGenBuffers(1, &texCoordVbo);
+		glBindBuffer(GL_ARRAY_BUFFER, texCoordVbo);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(texCoord), texCoord, GL_STATIC_DRAW);
 
 		GLuint vao = 0;
 		glGenVertexArrays(1, &vao);
@@ -101,6 +116,14 @@ int main(int argc, char** argv)
 		glBindBuffer(GL_ARRAY_BUFFER, colorsVbo);
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 
+		glEnableVertexAttribArray(2);
+		glBindBuffer(GL_ARRAY_BUFFER, texCoordVbo);
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+		pDefaultShaderProgram->use();
+		pDefaultShaderProgram->setInt("tex", 0);
+
+
 		while (!glfwWindowShouldClose(pWindow))
 		{
 
@@ -108,6 +131,7 @@ int main(int argc, char** argv)
 
 			pDefaultShaderProgram->use();
 			glBindVertexArray(vao);
+			tex->bind();
 			glDrawArrays(GL_TRIANGLES, 0, 3);
 
 			glfwSwapBuffers(pWindow);
